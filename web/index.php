@@ -68,13 +68,11 @@ $app->post('/webhooks', function(Request $request) use($app) {
 
     foreach (json_decode($response->getBody()->getContents(), true) as $product) {
         $items[] = [
-            'product_id' => $product['product_id'],
+            'product_id' => $product['sku'],
             'quantity' => $product['quantity'],
-            'price' => $product['total_inc_tax']
+            'price' => round($product['total_inc_tax'], 0)
         ];
     }
-
-    return json_encode($items);
 
     // Retrieve FootPrint
     $response = $client->request('POST', 'https://api-staging.cooler.dev/v1/footprint/products', [
@@ -86,13 +84,13 @@ $app->post('/webhooks', function(Request $request) use($app) {
     ]);
 
     // Neutralize FootPrint
-    if ($response->getStatusCode() === 200) {
-        $body = json_decode($response->getBody());
+    if ($response->getStatusCode() === 201) {
+        $body = json_decode($response->getBody()->getContents(), true);
         $neutralisationId = $body['id'];
 
-        $response = $client->request('POST', 'https://api-staging.cooler.dev/v1/footprint/products', [
+        $response = $client->request('POST', 'https://api-staging.cooler.dev/v1/footprint/neutralize/transactions', [
             GuzzleHttp\RequestOptions::JSON => [
-                'transactions' => [$neutralisationId]
+                'ids' => [$neutralisationId]
             ],
             'headers' => $headersCooler
         ]);
