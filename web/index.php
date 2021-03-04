@@ -22,8 +22,9 @@ $app->get('/webhooks/cart_updated', function() use($app) {
     return $app['cooler.key'];
 });
 
-$app->post('/webhooks/cart_updated', function() use($app) {
-	return $app['cooler.key'];
+$app->post('/webhooks/cart_updated', function(Request $request) use($app) {
+
+	return $request->getContent();
 });
 
 $app->post('/webhooks', function(Request $request) use($app) {
