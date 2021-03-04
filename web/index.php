@@ -15,14 +15,13 @@ $app->register(new Silex\Provider\MonologServiceProvider(), array(
   'monolog.logfile' => 'php://stderr',
 ));
 
-$app['cooler.key'] = 'cooler_9005044e-e589-440f-be51-9c3cd3828dc3';
 $app['bc_headers'] = [
     'X-Auth-Client' => 'cdvg04j6qg6wqyrv07tlszt6uyzu5ia',
     'X-Auth-Token' => 'id0alsbs1c74qsymo8sjrqhy2r4zaio',
     'Content-Type' => 'application/json',
     'Accept' => 'application/json',
 ];
-$app['cooler_heders'] = [
+$app['cooler_headers'] = [
     'COOLER-API-KEY' => 'cooler_9005044e-e589-440f-be51-9c3cd3828dc3',
     'Content-Type' => 'application/json',
 ];
@@ -80,7 +79,7 @@ $app->post('/webhooks', function(Request $request) use($app) {
             'currency' => $currency,
             'items' => $items
         ],
-        'headers' => $headersCooler
+        'headers' => $app['cooler_headers']
     ]);
 
     // Neutralize FootPrint
@@ -92,7 +91,7 @@ $app->post('/webhooks', function(Request $request) use($app) {
             GuzzleHttp\RequestOptions::JSON => [
                 'ids' => [$neutralisationId]
             ],
-            'headers' => $headersCooler
+            'headers' => $app['cooler_headers']
         ]);
 
         if ($response->getStatusCode() === 200) {
