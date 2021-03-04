@@ -1,10 +1,12 @@
 <?php
 
+use Cooler\StoreHashExtractor;
+use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-$app = new Silex\Application();
+$app = new Application();
 $app['debug'] = true;
 
 const COOLER_HOST = 'https://api-staging.cooler.dev/v1/';
@@ -29,7 +31,7 @@ $app['cooler_headers'] = [
 $app->post('/webhooks/cart_updated', function(Request $request) use($app) {
 
     $client = new GuzzleHttp\Client();
-    $storeHash = 'tb0i4pdxam';
+    $storeHash = StoreHashExtractor::extract($request);
     $body = json_decode($request->getContent(), true);
     if (empty($body) || !$body['scope'] === 'store/cart/updated') {
         return 'wrong scope :( !';
@@ -40,7 +42,7 @@ $app->post('/webhooks/cart_updated', function(Request $request) use($app) {
         'https://api.bigcommerce.com/stores/'.$storeHash.'/v3/carts/'.$cartId,
         ['headers' => $app['bc_headers']]
     );
-    $t = $cart = json_decode($response->getBody()->getContents(), true);
+    $cart = json_decode($response->getBody()->getContents(), true);
     $currency = $cart['data']['currency']['code'];
     $items = [];
     foreach ($cart['data']['line_items']['physical_items'] as $item) {
@@ -66,7 +68,7 @@ $app->post('/webhooks/cart_updated', function(Request $request) use($app) {
     ]);
     $t = json_decode($response->getBody()->getContents(), true);
 
-	return $request->getContent();
+	return json_encode($t);
 });
 
 $app->post('/webhooks', function(Request $request) use($app) {

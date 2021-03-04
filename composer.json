@@ -4,7 +4,13 @@
     "monolog/monolog": "^1.22",
     "twig/twig": "^2.0",
     "symfony/twig-bridge": "^3",
-    "guzzlehttp/guzzle": "^7.2"
+    "guzzlehttp/guzzle": "^7.2",
+    "ext-json": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Cooler\\": "src/"
+    }
   },
   "require-dev": {
     "heroku/heroku-buildpack-php": "*"
