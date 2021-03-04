@@ -18,7 +18,13 @@ $app->register(new Silex\Provider\MonologServiceProvider(), array(
 $app['cooler.key'] = 'cooler_9005044e-e589-440f-be51-9c3cd3828dc3';
 $app['bc_headers'] = [
     'X-Auth-Client' => 'cdvg04j6qg6wqyrv07tlszt6uyzu5ia',
-    'X-Auth-Token' => 'id0alsbs1c74qsymo8sjrqhy2r4zaio'
+    'X-Auth-Token' => 'id0alsbs1c74qsymo8sjrqhy2r4zaio',
+    'Content-Type' => 'application/json',
+    'Accept' => 'application/json',
+];
+$app['cooler_heders'] = [
+    'COOLER-API-KEY' => 'cooler_9005044e-e589-440f-be51-9c3cd3828dc3',
+    'Content-Type' => 'application/json',
 ];
 
 
@@ -34,13 +40,7 @@ $app->post('/webhooks/cart_updated', function(Request $request) use($app) {
 $app->post('/webhooks', function(Request $request) use($app) {
     $client = new GuzzleHttp\Client();
     $storeHash = 'tb0i4pdxam';
-    $headersBC = [
-        'X-Auth-Client' => 'cdvg04j6qg6wqyrv07tlszt6uyzu5ia',
-        'X-Auth-Token' => 'id0alsbs1c74qsymo8sjrqhy2r4zaio',
-        'Content-Type' => 'application/json',
-        'Accept' => 'application/json',
-    ];
-    $headersCooler = ['COOLER-API-KEY' => 'cooler_9005044e-e589-440f-be51-9c3cd3828dc3', 'Content-Type' => 'application/json'];
+    
     $body = json_decode($request->getContent(), true);
 
     if (empty($body) || !$body['scope'] === 'store/cart/converted') {
@@ -53,7 +53,7 @@ $app->post('/webhooks', function(Request $request) use($app) {
     $response = $client->request(
 'GET',
     'https://api.bigcommerce.com/stores/'.$storeHash.'/v2/orders/'.$orderId,
-        ['headers' => $headersBC]
+        ['headers' => $app['bc_headers']]
     );
     $body = json_decode($response->getBody());
     $currency = $body->currency_code;
@@ -62,7 +62,7 @@ $app->post('/webhooks', function(Request $request) use($app) {
     $response = $client->request(
         'GET',
         'https://api.bigcommerce.com/stores/'.$storeHash.'/v2/orders/'.$orderId.'/products',
-        ['headers' => $headersBC]
+        ['headers' => $app['bc_headers']]
     );
     $items = [];
 
