@@ -19,7 +19,7 @@ $app->register(new Silex\Provider\MonologServiceProvider(), array(
 
 $app['bc_headers'] = [
     'X-Auth-Client' => 'cdvg04j6qg6wqyrv07tlszt6uyzu5ia',
-    'X-Auth-Token' => 'id0alsbs1c74qsymo8sjrqhy2r4zaio',
+    'X-Auth-Token' => '4glcdmnprqzbomc0antzo0eknlkrpr4',
     'Content-Type' => 'application/json',
     'Accept' => 'application/json',
 ];
