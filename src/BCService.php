@@ -80,4 +80,43 @@ class BCService
 
         return $itemsInfo;
     }
+
+    /**
+     * @param int $cartId
+     * @return array
+     * @throws GuzzleException
+     */
+    public function retrieveCartInfo(int $cartId): array
+    {
+        $response = $this->client->request(
+            'GET',
+            self::API_URL.$this->storeHash.'/v3/carts/'.$cartId,
+            ['headers' => self::BC_HEADERS]
+        );
+
+        if ($response->getStatusCode() !== 200) {
+            throw new InvalidArgumentException('Something went wrong retrieving the Footprint');
+        }
+
+        $cart = json_decode($response->getBody()->getContents(), true);
+        $info = [];
+        $info['currency'] = $cart['data']['currency']['code'];
+
+        foreach ($cart['data']['line_items']['physical_items'] as $item) {
+            $info['itemsInfo'] = [
+                'product_id' => $item['sku'],
+                'quantity' => $item['quantity'],
+                'price' => $item['sale_price'],
+            ];
+        }
+        foreach ($cart['data']['line_items']['digital_items'] as $item) {
+            $info['itemsInfo'] = [
+                'product_id' => $item['sku'],
+                'quantity' => $item['quantity'],
+                'price' => $item['sale_price'],
+            ];
+        }
+
+        return $info;
+    }
 }
