@@ -2,30 +2,21 @@
 
 use Symfony\Component\HttpFoundation\Request;
 
-require('../vendor/autoload.php');
+require_once __DIR__ . '/../vendor/autoload.php';
 
 $app = new Silex\Application();
 $app['debug'] = true;
+
 
 // Register the monolog logging service
 $app->register(new Silex\Provider\MonologServiceProvider(), array(
   'monolog.logfile' => 'php://stderr',
 ));
 
-// Register view rendering
-$app->register(new Silex\Provider\TwigServiceProvider(), array(
-    'twig.path' => __DIR__.'/views',
-));
+$app['cooler.key'] = 'cooler_9005044e-e589-440f-be51-9c3cd3828dc3';
 
-// Our web handlers
-
-$app->get('/', function() use($app) {
-  $app['monolog']->addDebug('logging output.');
-  return $app['twig']->render('index.twig');
-});
-
-$app->get('/test', function() use($app) {
-	return "HI!";
+$app->post('/webhooks/cart_updated', function() use($app) {
+	return $app['cooler.key'];
 });
 
 $app->post('/webhooks', function(Request $request) use($app) {
