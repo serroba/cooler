@@ -7,6 +7,8 @@ require_once __DIR__ . '/../vendor/autoload.php';
 $app = new Silex\Application();
 $app['debug'] = true;
 
+const COOLER_HOST = 'https://api-staging.cooler.dev/v1/';
+
 
 // Register the monolog logging service
 $app->register(new Silex\Provider\MonologServiceProvider(), array(
@@ -14,6 +16,11 @@ $app->register(new Silex\Provider\MonologServiceProvider(), array(
 ));
 
 $app['cooler.key'] = 'cooler_9005044e-e589-440f-be51-9c3cd3828dc3';
+
+
+$app->get('/webhooks/cart_updated', function() use($app) {
+    return $app['cooler.key'];
+});
 
 $app->post('/webhooks/cart_updated', function() use($app) {
 	return $app['cooler.key'];
