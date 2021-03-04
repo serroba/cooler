@@ -26,12 +26,45 @@ $app['cooler_headers'] = [
     'Content-Type' => 'application/json',
 ];
 
-
-$app->get('/webhooks/cart_updated', function() use($app) {
-    return $app['cooler.key'];
-});
-
 $app->post('/webhooks/cart_updated', function(Request $request) use($app) {
+
+    $client = new GuzzleHttp\Client();
+    $storeHash = 'tb0i4pdxam';
+    $body = json_decode($request->getContent(), true);
+    if (empty($body) || !$body['scope'] === 'store/cart/updated') {
+        return 'wrong scope :( !';
+    }
+    $cartId = $body['data']['id'];
+    $response = $client->request(
+        'GET',
+        'https://api.bigcommerce.com/stores/'.$storeHash.'/v3/carts/'.$cartId,
+        ['headers' => $app['bc_headers']]
+    );
+    $t = $cart = json_decode($response->getBody()->getContents(), true);
+    $currency = $cart['data']['currency']['code'];
+    $items = [];
+    foreach ($cart['data']['line_items']['physical_items'] as $item) {
+        $items[] = [
+            'product_id' => $item['sku'],
+            'quantity' => $item['quantity'],
+            'price' => $item['sale_price'],
+        ];
+    }
+    foreach ($cart['data']['line_items']['digital_items'] as $item) {
+        $items[] = [
+            'product_id' => $item['sku'],
+            'quantity' => $item['quantity'],
+            'price' => $item['sale_price'],
+        ];
+    }
+    $response = $client->request('POST', 'https://api-staging.cooler.dev/v1/footprint/products', [
+        GuzzleHttp\RequestOptions::JSON => [
+            'currency' => $currency,
+            'items' => $items
+        ],
+        'headers' => $app['cooler_headers']
+    ]);
+    $t = json_decode($response->getBody()->getContents(), true);
 
 	return $request->getContent();
 });
