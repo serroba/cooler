@@ -29,7 +29,7 @@ $app->post('/webhooks/cart_updated', function() use($app) {
 $app->post('/webhooks', function(Request $request) use($app) {
     $client = new GuzzleHttp\Client();
     $storeHash = 'tb0i4pdxam';
-    $headers = array('X-Auth-Client' => 'bvq6cndv138suc8ttz4go3bfdqvwtfj', 'X-Auth-Token' => 'kw28zub9tnz3jjfmsf5gpf6lztjdp2s');
+    $headers = array('X-Auth-Client' => 'cdvg04j6qg6wqyrv07tlszt6uyzu5ia', 'X-Auth-Token' => 'id0alsbs1c74qsymo8sjrqhy2r4zaio');
     $body = json_decode($request->getContent(), true);
 
     if (empty($body) || !$body['scope'] === 'store/cart/converted') {
@@ -40,7 +40,7 @@ $app->post('/webhooks', function(Request $request) use($app) {
 
     // Retrieve Order's currency
     $response = $client->request(
-'POST',
+'GET',
     'https://api.bigcommerce.com/stores/'.$storeHash.'/v2/orders/'.$orderId,
         ['headers' => $headers]
     );
