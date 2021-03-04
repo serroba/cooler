@@ -1,5 +1,7 @@
 <?php
 
+use Cooler\BCService;
+use Cooler\CoolerService;
 use Cooler\StoreHashExtractor;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
@@ -72,9 +74,7 @@ $app->post('/webhooks/cart_updated', function(Request $request) use($app) {
 });
 
 $app->post('/webhooks', function(Request $request) use($app) {
-    $client = new GuzzleHttp\Client();
-    $storeHash = 'tb0i4pdxam';
-    
+    $storeHash = StoreHashExtractor::extract($request);
     $body = json_decode($request->getContent(), true);
 
     if (empty($body) || !$body['scope'] === 'store/cart/converted') {
@@ -83,58 +83,15 @@ $app->post('/webhooks', function(Request $request) use($app) {
 
     $orderId = $body['data']['orderId'];
 
-    // Retrieve Order's currency
-    $response = $client->request(
-'GET',
-    'https://api.bigcommerce.com/stores/'.$storeHash.'/v2/orders/'.$orderId,
-        ['headers' => $app['bc_headers']]
-    );
-    $body = json_decode($response->getBody());
-    $currency = $body->currency_code;
+    $bcService = new BCService($storeHash);
+    $currency = $bcService->retrieveOrderCurrency($orderId);
+    $itemsInfo = $bcService->retrieveOrderProductsInfo($orderId);
 
-    // Retrieve Orders' items info
-    $response = $client->request(
-        'GET',
-        'https://api.bigcommerce.com/stores/'.$storeHash.'/v2/orders/'.$orderId.'/products',
-        ['headers' => $app['bc_headers']]
-    );
-    $items = [];
+    $coolerService = new CoolerService();
+    $transactionId = $coolerService->retrieveFootprint($currency, $itemsInfo);
+    $coolerService->neutralizeTransactions([$transactionId]);
 
-    foreach (json_decode($response->getBody()->getContents(), true) as $product) {
-        $items[] = [
-            'product_id' => $product['sku'],
-            'quantity' => $product['quantity'],
-            'price' => round($product['total_inc_tax'], 0)
-        ];
-    }
-
-    // Retrieve FootPrint
-    $response = $client->request('POST', 'https://api-staging.cooler.dev/v1/footprint/products', [
-        GuzzleHttp\RequestOptions::JSON => [
-            'currency' => $currency,
-            'items' => $items
-        ],
-        'headers' => $app['cooler_headers']
-    ]);
-
-    // Neutralize FootPrint
-    if ($response->getStatusCode() === 201) {
-        $body = json_decode($response->getBody()->getContents(), true);
-        $neutralisationId = $body['id'];
-
-        $response = $client->request('POST', 'https://api-staging.cooler.dev/v1/footprint/neutralize/transactions', [
-            GuzzleHttp\RequestOptions::JSON => [
-                'ids' => [$neutralisationId]
-            ],
-            'headers' => $app['cooler_headers']
-        ]);
-
-        if ($response->getStatusCode() === 200) {
-            return 'success!';
-        }
-    }
-
-    return 'failed :(';
+    return 'success!';
 });
 
 
