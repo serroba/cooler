@@ -4,6 +4,7 @@ use Cooler\BCService;
 use Cooler\CarbonItem;
 use Cooler\CoolerService;
 use Cooler\RequestExtractor;
+use GuzzleHttp\Client;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -11,6 +12,19 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 $app = new Application();
 $app['debug'] = true;
+
+$app[Client::class] = function (Application $app) {
+    return new Client();
+};
+$app[BCService::class] = function (Application $app) {
+    $clientId = getenv('BC_CLIENT_ID') ?: 'cdvg04j6qg6wqyrv07tlszt6uyzu5ia';
+    $token = getenv('BC_TOKEN') ?: '91z9nkuqu279vxs8kh1aldpbpq7w0hf';
+    return new BCService($app[Client::class], $clientId, $token);
+};
+
+$app[CoolerService::class] = function (Application $app) {
+    return new CoolerService($app[Client::class]);
+};
 
 // Register the monolog logging service
 $app->register(new Silex\Provider\MonologServiceProvider(), array(
@@ -21,10 +35,13 @@ $app->post('/webhooks/cart_updated', function(Request $request) use($app) {
     $storeHash = RequestExtractor::extractStoreHash($request);
     $cartId = RequestExtractor::extractCartId($request);
 
-    $bcService = new BCService($storeHash);
+    /** @var BCService $bcService */
+    $bcService = $app[BCService::class];
+    $bcService->setHash($storeHash);
     $cartInfo = $bcService->mapCartInformationToCoolerRequest($cartId);
 
-    $coolerService = new CoolerService();
+    /** @var CoolerService $coolerService */
+    $coolerService = $app[CoolerService::class];
     $footPrint = $coolerService->retrieveFootprint($cartInfo['currency'], $cartInfo['itemsInfo']);
 
     $totalPriceCarbon = 0;
@@ -47,11 +64,14 @@ $app->post('/webhooks', function(Request $request) use($app) {
     $storeHash = RequestExtractor::extractStoreHash($request);
     $orderId = RequestExtractor::extractOrderId($request);
 
-    $bcService = new BCService($storeHash);
+    /** @var BCService $bcService */
+    $bcService = $app[BCService::class];
+    $bcService->setHash($storeHash);
     $currency = $bcService->retrieveOrderCurrency($orderId);
     $itemsInfo = $bcService->retrieveOrderProductsInfo($orderId);
 
-    $coolerService = new CoolerService();
+    /** @var CoolerService $coolerService */
+    $coolerService = $app[CoolerService::class];
     $transactionId = $coolerService->retrieveTransactionId($currency, $itemsInfo);
     $coolerService->neutralizeTransactions([$transactionId]);
     $transactionInfo = $coolerService->retrieveTransactionInfo($transactionId);

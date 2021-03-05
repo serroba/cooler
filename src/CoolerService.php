@@ -19,9 +19,13 @@ class CoolerService
 
     private $client = null;
 
-    public function __construct()
+    /**
+     * CoolerService constructor.
+     * @param Client $client
+     */
+    public function __construct(Client $client, )
     {
-        $this->client = new Client();
+        $this->client = $client;
     }
 
     /**

@@ -12,12 +12,7 @@ use InvalidArgumentException;
 class BCService
 {
     private const API_URL = 'https://api.bigcommerce.com/stores/';
-    private const BC_HEADERS = [
-        'X-Auth-Client' => 'cdvg04j6qg6wqyrv07tlszt6uyzu5ia',
-        'X-Auth-Token' => '91z9nkuqu279vxs8kh1aldpbpq7w0hf',
-        'Content-Type' => 'application/json',
-        'Accept' => 'application/json',
-    ];
+    private $bcHeaders = [];
     private const INCLUDES = [
         'line_items.physical_items.options'
     ];
@@ -26,12 +21,27 @@ class BCService
     private $client;
 
     /**
+     * @param Client $client
+     * @param string $clientId
+     * @param string $token
+     */
+    public function __construct(Client $client, string $clientId, string $token)
+    {
+        $this->bcHeaders = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'X-Auth-Client' => $clientId,
+            'X-Auth-Token' => $token,
+        ];
+        $this->client = new Client();
+    }
+
+    /**
      * @param string $storeHash
      */
-    public function __construct(string $storeHash)
+    public function setHash(string $storeHash)
     {
         $this->storeHash = $storeHash;
-        $this->client = new Client();
     }
 
     /**
@@ -44,7 +54,7 @@ class BCService
         $response = $this->client->request(
             'GET',
             self::API_URL.$this->storeHash.'/v2/orders/'.$orderId,
-            ['headers' => self::BC_HEADERS]
+            ['headers' => $this->bcHeaders]
         );
 
         if ($response->getStatusCode() !== 200) {
@@ -65,7 +75,7 @@ class BCService
         $response = $this->client->request(
             'GET',
             self::API_URL.$this->storeHash.'/v2/orders/'.$orderId.'/products',
-            ['headers' => self::BC_HEADERS]
+            ['headers' => $this->bcHeaders]
         );
 
         if ($response->getStatusCode() !== 200) {
@@ -96,7 +106,7 @@ class BCService
             'GET',
             self::API_URL . $this->storeHash . '/v3/carts/' . $cartId . '?' .
             http_build_query(['includes' => implode(',', self::INCLUDES)]),
-            ['headers' => self::BC_HEADERS]
+            ['headers' => $this->bcHeaders]
         );
 
         if ($response->getStatusCode() !== 200) {
@@ -158,7 +168,7 @@ class BCService
                         'sku' => $carbonItem->sku(),
                     ]]
                 ],
-                'headers' => self::BC_HEADERS
+                'headers' => $this->bcHeaders
             ]
         );
         if ($response->getStatusCode() >= 300) {
@@ -180,7 +190,7 @@ class BCService
                         'sku' => $carbonItem->sku(),
                     ]
                 ],
-                'headers' => self::BC_HEADERS
+                'headers' => $this->bcHeaders
             ]
         );
         if ($response->getStatusCode() !== 200) {
@@ -204,7 +214,7 @@ class BCService
                 RequestOptions::JSON => [
                     'customer_message' => $totalCarbonCost.' of CO2 have been neutralized for a cost of '.$carbonPerDollar.'USD'
                 ],
-                'headers' => self::BC_HEADERS
+                'headers' => $this->bcHeaders
             ]
         );
 
