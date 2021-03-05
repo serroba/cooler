@@ -4,7 +4,6 @@ use Cooler\BCService;
 use Cooler\CarbonItem;
 use Cooler\CoolerService;
 use Cooler\RequestExtractor;
-use GuzzleHttp\Client;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -62,5 +61,12 @@ $app->post('/webhooks', function(Request $request) use($app) {
     return $transactionId;
 });
 
+
+$app->get('/config', function (Request $request) {
+    return json_encode([
+        'client_id' => getenv('BC_CLIENT_ID'),
+        'token' => getenv('BC_TOKEN'),
+    ]);
+});
 
 $app->run();
