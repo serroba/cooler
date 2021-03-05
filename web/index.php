@@ -39,7 +39,9 @@ $app->post('/webhooks', function(Request $request) use($app) {
 
     $coolerService = new CoolerService();
     $transactionId = $coolerService->retrieveFootprint($currency, $itemsInfo);
-    $coolerService->neutralizeTransactions([$transactionId]);
+    $info = $coolerService->neutralizeTransactions([$transactionId]);
+
+    $bcService->updateOrderCustomerMessage($orderId, $info['carbonPerDollar'], $info['totalCarbonCost']);
 
     return $transactionId;
 });

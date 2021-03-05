@@ -52,10 +52,10 @@ class CoolerService
 
     /**
      * @param array $transactionIds
-     * @return void
+     * @return array
      * @throws GuzzleException
      */
-    public function neutralizeTransactions(array $transactionIds)
+    public function neutralizeTransactions(array $transactionIds): array
     {
         $response = $this->client->request('POST', self::API_URL.'neutralize/transactions', [
             RequestOptions::JSON => [
@@ -67,5 +67,18 @@ class CoolerService
         if ($response->getStatusCode() !== 200) {
             throw new InvalidArgumentException('Something went wrong neutralizing the Transactions');
         }
+
+        $body = json_decode($response->getBody()->getContents(), true);
+
+        $info = [];
+
+        foreach ($body['transactions']['items'] as $item) {
+            if ($item['id'] === $transactionIds[0]) {
+                $info['carbonPerDollar'] = $item['footprint']['carbon_cost'];
+                $info['totalCarbonCost'] = $item['footprint']['carbon_per_dollar'];
+            }
+        }
+
+        return $info;
     }
 }

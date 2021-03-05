@@ -6,6 +6,7 @@ namespace Cooler;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\RequestOptions;
 use InvalidArgumentException;
 
 class BCService
@@ -118,5 +119,30 @@ class BCService
         }
 
         return $info;
+    }
+
+    /**
+     * @param int $orderId
+     * @param float $carbonPerDollar
+     * @param float $totalCarbonCost
+     * @return void
+     * @throws GuzzleException
+     */
+    public function updateOrderCustomerMessage(int $orderId, float $carbonPerDollar, float $totalCarbonCost)
+    {
+        $response = $this->client->request(
+            'PUT',
+            self::API_URL.$this->storeHash.'/v2/orders/'.$orderId,
+            [
+                RequestOptions::JSON => [
+                    'customer_message' => $totalCarbonCost.' of CO2 have been neutralized for a cost of '.$carbonPerDollar.'USD'
+                ],
+                'headers' => self::BC_HEADERS
+            ]
+        );
+
+        if ($response->getStatusCode() !== 200) {
+            throw new InvalidArgumentException('Something went wrong updating the Order Message');
+        }
     }
 }
