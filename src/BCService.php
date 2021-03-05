@@ -14,13 +14,13 @@ class BCService
     const API_URL = 'https://api.bigcommerce.com/stores/';
     const BC_HEADERS = [
         'X-Auth-Client' => 'cdvg04j6qg6wqyrv07tlszt6uyzu5ia',
-        'X-Auth-Token' => '4glcdmnprqzbomc0antzo0eknlkrpr4',
+        'X-Auth-Token' => 'llvfwcb80glkixtq1qaep88bfv0yjrz',
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
     ];
 
     private $storeHash = '';
-    private $client = null;
+    private $client;
 
     /**
      * @param string $storeHash
@@ -83,11 +83,11 @@ class BCService
     }
 
     /**
-     * @param int $cartId
+     * @param string $cartId
      * @return array
      * @throws GuzzleException
      */
-    public function retrieveCartInfo(int $cartId): array
+    public function mapCartInformationToCoolerRequest(string $cartId): array
     {
         $response = $this->client->request(
             'GET',
@@ -100,25 +100,48 @@ class BCService
         }
 
         $cart = json_decode($response->getBody()->getContents(), true);
-        $info = [];
-        $info['currency'] = $cart['data']['currency']['code'];
+        $requestData = [];
+        $requestData['currency'] = $cart['data']['currency']['code'];
 
         foreach ($cart['data']['line_items']['physical_items'] as $item) {
-            $info['itemsInfo'] = [
+            $requestData['itemsInfo'][] = [
                 'product_id' => $item['sku'],
                 'quantity' => $item['quantity'],
                 'price' => $item['sale_price'],
             ];
         }
         foreach ($cart['data']['line_items']['digital_items'] as $item) {
-            $info['itemsInfo'] = [
+            $requestData['itemsInfo'][] = [
                 'product_id' => $item['sku'],
                 'quantity' => $item['quantity'],
                 'price' => $item['sale_price'],
             ];
         }
 
-        return $info;
+        return $requestData;
+    }
+
+
+    public function addCustomItem(CarbonItem $carbonItem)
+    {
+        $response = $this->client->request(
+            'POST',
+            self::API_URL . $this->storeHash . '/v3/carts/' . $carbonItem->getCartId() . '/items',
+            [
+                RequestOptions::JSON => [
+                    'custom_items' => [[
+                            'name' => $carbonItem->getName(),
+                            'list_price' => $carbonItem->getCarbonPrice(),
+                            'quantity' => $carbonItem->quantity(),
+                            'sku' => $carbonItem->sku(),
+                    ]]
+                ],
+                'headers' => self::BC_HEADERS
+            ]
+        );
+        if ($response->getStatusCode() !== 200) {
+            throw new InvalidArgumentException('Something went wrong updating the Order Message');
+        }
     }
 
     /**

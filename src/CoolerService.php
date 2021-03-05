@@ -27,10 +27,10 @@ class CoolerService
     /**
      * @param string $currency
      * @param array $items
-     * @return string
+     * @return array
      * @throws GuzzleException
      */
-    public function retrieveFootprint(string $currency, array $items): string
+    public function retrieveFootprint(string $currency, array $items): array
     {
         $response = $this->client->request('POST', self::API_URL.'products', [
             RequestOptions::JSON => [
@@ -42,12 +42,16 @@ class CoolerService
 
         if ($response->getStatusCode() === 201) {
             if (empty($body) || !isset($body['producer'])) {
-                $body = json_decode($response->getBody()->getContents(), true);
-                return $body['id'];
+                return json_decode($response->getBody()->getContents(), true);
             }
         }
 
         throw new InvalidArgumentException('Something went wrong retrieving the Footprint');
+    }
+
+    public function retrieveTransactionId(string $currency, array $items)
+    {
+        return $this->retrieveFootprint($currency, $items)['id'];
     }
 
     /**

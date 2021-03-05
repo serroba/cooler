@@ -1,8 +1,10 @@
 <?php
 
 use Cooler\BCService;
+use Cooler\CarbonItem;
 use Cooler\CoolerService;
 use Cooler\RequestExtractor;
+use GuzzleHttp\Client;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -21,12 +23,21 @@ $app->post('/webhooks/cart_updated', function(Request $request) use($app) {
     $cartId = RequestExtractor::extractCartId($request);
 
     $bcService = new BCService($storeHash);
-    $cartInfo = $bcService->retrieveCartInfo($cartId);
+    $cartInfo = $bcService->mapCartInformationToCoolerRequest($cartId);
 
     $coolerService = new CoolerService();
-    $transactionId = $coolerService->retrieveFootprint($cartInfo['currency'], $cartInfo['itemsInfo']);
+    $footPrint = $coolerService->retrieveFootprint($cartInfo['currency'], $cartInfo['itemsInfo']);
 
-	return json_encode($transactionId);
+    $totalPriceCarbon = 0;
+    $totalCarbonAmount = 0;
+
+    foreach ($footPrint['items'] as $item) {
+        $totalPriceCarbon += $item['footprint']['carbon_per_dollar'];
+        $totalCarbonAmount += $item['footprint']['carbon_cost'];
+    }
+    $bcService->addCustomItem(new CarbonItem($cartId, $totalPriceCarbon, $totalCarbonAmount));
+
+	return json_encode($footPrint);
 });
 
 $app->post('/webhooks', function(Request $request) use($app) {
@@ -38,7 +49,7 @@ $app->post('/webhooks', function(Request $request) use($app) {
     $itemsInfo = $bcService->retrieveOrderProductsInfo($orderId);
 
     $coolerService = new CoolerService();
-    $transactionId = $coolerService->retrieveFootprint($currency, $itemsInfo);
+    $transactionId = $coolerService->retrieveTransactionId($currency, $itemsInfo);
     $coolerService->neutralizeTransactions([$transactionId]);
     $transactionInfo = $coolerService->retrieveTransactionInfo($transactionId);
 
