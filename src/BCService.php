@@ -11,12 +11,15 @@ use InvalidArgumentException;
 
 class BCService
 {
-    const API_URL = 'https://api.bigcommerce.com/stores/';
-    const BC_HEADERS = [
+    private const API_URL = 'https://api.bigcommerce.com/stores/';
+    private const BC_HEADERS = [
         'X-Auth-Client' => 'cdvg04j6qg6wqyrv07tlszt6uyzu5ia',
         'X-Auth-Token' => 'llvfwcb80glkixtq1qaep88bfv0yjrz',
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
+    ];
+    private const INCLUDES = [
+        'line_items.physical_items.options'
     ];
 
     private $storeHash = '';
@@ -91,7 +94,8 @@ class BCService
     {
         $response = $this->client->request(
             'GET',
-            self::API_URL.$this->storeHash.'/v3/carts/'.$cartId,
+            self::API_URL . $this->storeHash . '/v3/carts/' . $cartId . '?' .
+            http_build_query(['includes' => implode(',', self::INCLUDES)]),
             ['headers' => self::BC_HEADERS]
         );
 
@@ -104,11 +108,24 @@ class BCService
         $requestData['currency'] = $cart['data']['currency']['code'];
 
         foreach ($cart['data']['line_items']['physical_items'] as $item) {
-            $requestData['itemsInfo'][] = [
-                'product_id' => $item['sku'],
-                'quantity' => $item['quantity'],
-                'price' => $item['sale_price'],
-            ];
+            if (isset($item['options'])) {
+                foreach ($item['options'] as $option) {
+                    if ($option['name'] === 'neutralize carbon?' && $option['value'] === 'Yes') {
+                        $requestData['itemsInfo'][] = [
+                            'product_id' => $item['sku'],
+                            'quantity' => $item['quantity'],
+                            'price' => $item['sale_price'],
+                        ];
+                        break;
+                    }
+                }
+            } else {
+                $requestData['itemsInfo'][] = [
+                    'product_id' => $item['sku'],
+                    'quantity' => $item['quantity'],
+                    'price' => $item['sale_price'],
+                ];
+            }
         }
         foreach ($cart['data']['line_items']['digital_items'] as $item) {
             $requestData['itemsInfo'][] = [
