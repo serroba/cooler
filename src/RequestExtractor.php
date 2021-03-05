@@ -42,7 +42,7 @@ class RequestExtractor
     public static function extractOrderId(Request $request): int
     {
         $body = json_decode($request->getContent(), true);
-        if (empty($body) || !$body['scope'] === 'store/cart/updated') {
+        if (empty($body) || !$body['scope'] === 'store/cart/converted') {
             throw new InvalidArgumentException('wrong producer :( !');
         }
         return $body['data']['orderId'];
