@@ -14,7 +14,7 @@ class BCService
     private const API_URL = 'https://api.bigcommerce.com/stores/';
     private const BC_HEADERS = [
         'X-Auth-Client' => 'cdvg04j6qg6wqyrv07tlszt6uyzu5ia',
-        'X-Auth-Token' => 'llvfwcb80glkixtq1qaep88bfv0yjrz',
+        'X-Auth-Token' => '91z9nkuqu279vxs8kh1aldpbpq7w0hf',
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
     ];
@@ -148,7 +148,7 @@ class BCService
     {
         $response = $this->client->request(
             'POST',
-            self::API_URL . $this->storeHash . '/v3/carts/' . $carbonItem->getCartId(),
+            self::API_URL . $this->storeHash . '/v3/carts/' . $carbonItem->getCartId() . '/items',
             [
                 RequestOptions::JSON => [
                     'custom_items' => [[
@@ -161,8 +161,8 @@ class BCService
                 'headers' => self::BC_HEADERS
             ]
         );
-        if ($response->getStatusCode() !== 200) {
-            throw new InvalidArgumentException('Something went wrong updating the Order Message');
+        if ($response->getStatusCode() >= 300) {
+            throw new InvalidArgumentException('Something went wrong Adding a custom Item');
         }
     }
 
