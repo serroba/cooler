@@ -134,6 +134,11 @@ class BCService
                 'price' => $item['sale_price'],
             ];
         }
+        foreach ($cart['data']['line_items']['custom_items'] as $item) {
+            if ($item['sku'] === 'cooler-custom-sku') {
+                $requestData['custom_item_id'] = $item['id'];
+            }
+        }
 
         return $requestData;
     }
@@ -152,6 +157,28 @@ class BCService
                             'quantity' => $carbonItem->quantity(),
                             'sku' => $carbonItem->sku(),
                     ]]
+                ],
+                'headers' => self::BC_HEADERS
+            ]
+        );
+        if ($response->getStatusCode() !== 200) {
+            throw new InvalidArgumentException('Something went wrong updating the Order Message');
+        }
+    }
+
+    public function updateCustomItem(CarbonItem $carbonItem)
+    {
+        $response = $this->client->request(
+            'PUT',
+            self::API_URL . $this->storeHash . '/v3/carts/' . $carbonItem->getCartId() . '/items/' . $carbonItem->getLineItemId(),
+            [
+                RequestOptions::JSON => [
+                    'line_item' => [
+                        'name' => $carbonItem->getName(),
+                        'list_price' => $carbonItem->getCarbonPrice(),
+                        'quantity' => $carbonItem->quantity(),
+                        'sku' => $carbonItem->sku(),
+                    ]
                 ],
                 'headers' => self::BC_HEADERS
             ]

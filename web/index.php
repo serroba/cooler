@@ -35,7 +35,11 @@ $app->post('/webhooks/cart_updated', function(Request $request) use($app) {
         $totalPriceCarbon += $item['footprint']['carbon_per_dollar'];
         $totalCarbonAmount += $item['footprint']['carbon_cost'];
     }
-    $bcService->addCustomItem(new CarbonItem($cartId, $totalPriceCarbon, $totalCarbonAmount));
+    if (!isset($cartInfo['custom_item_id'])) {
+        $bcService->addCustomItem(new CarbonItem($cartId, $totalPriceCarbon, $totalCarbonAmount));
+    } else {
+//        $bcService->updateCustomItem(new CarbonItem($cartId, $totalPriceCarbon, $totalCarbonAmount, $cartInfo['custom_item_id']));
+    }
 
 	return json_encode($footPrint);
 });

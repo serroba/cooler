@@ -9,13 +9,24 @@ class CarbonItem
     private string $cartId;
     private float $priceCarbon;
     private float $carbonAmount;
+    private ?string $lineItemId;
 
-    public function __construct(string $cartId, float $priceCarbon, float $carbonAmount)
+    public function __construct(string $cartId, float $priceCarbon, float $carbonAmount, ?string $lineItem = null)
     {
         $this->cartId = $cartId;
         $this->priceCarbon = $priceCarbon;
         $this->carbonAmount = round($carbonAmount, 2);
+        $this->lineItemId = $lineItem;
     }
+
+    /**
+     * @return string
+     */
+    public function getLineItemId(): string
+    {
+        return $this->lineItemId ?? '';
+    }
+
 
     /**
      * @return string
@@ -40,7 +51,7 @@ class CarbonItem
 
     public function sku(): string
     {
-        return 'custom-sku-custom';
+        return 'cooler-custom-sku';
     }
 
     public function quantity(): int
