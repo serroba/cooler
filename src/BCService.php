@@ -148,14 +148,14 @@ class BCService
     {
         $response = $this->client->request(
             'POST',
-            self::API_URL . $this->storeHash . '/v3/carts/' . $carbonItem->getCartId() . '/items',
+            self::API_URL . $this->storeHash . '/v3/carts/' . $carbonItem->getCartId(),
             [
                 RequestOptions::JSON => [
                     'custom_items' => [[
-                            'name' => $carbonItem->getName(),
-                            'list_price' => $carbonItem->getCarbonPrice(),
-                            'quantity' => $carbonItem->quantity(),
-                            'sku' => $carbonItem->sku(),
+                        'name' => $carbonItem->getName(),
+                        'list_price' => $carbonItem->getCarbonPrice(),
+                        'quantity' => $carbonItem->quantity(),
+                        'sku' => $carbonItem->sku(),
                     ]]
                 ],
                 'headers' => self::BC_HEADERS
