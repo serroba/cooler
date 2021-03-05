@@ -52,10 +52,10 @@ class CoolerService
 
     /**
      * @param array $transactionIds
-     * @return array
+     * @return void
      * @throws GuzzleException
      */
-    public function neutralizeTransactions(array $transactionIds): array
+    public function neutralizeTransactions(array $transactionIds): void
     {
         $response = $this->client->request('POST', self::API_URL.'neutralize/transactions', [
             RequestOptions::JSON => [
@@ -67,17 +67,28 @@ class CoolerService
         if ($response->getStatusCode() !== 200) {
             throw new InvalidArgumentException('Something went wrong neutralizing the Transactions');
         }
+    }
+
+    /**
+     * @param string $transactionId
+     * @return array
+     * @throws GuzzleException
+     */
+    public function retrieveTransactionInfo(string $transactionId): array
+    {
+        $response = $this->client->request('GET', 'https://api-staging.cooler.dev/v1/transactions/'.$transactionId, [
+            'headers' => self::COOLER_HEADERS
+        ]);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new InvalidArgumentException('Something went wrong neutralizing the Transactions');
+        }
 
         $body = json_decode($response->getBody()->getContents(), true);
 
         $info = [];
-
-        foreach ($body['transactions']['items'] as $item) {
-            if ($item['id'] === $transactionIds[0]) {
-                $info['carbonPerDollar'] = $item['footprint']['carbon_cost'];
-                $info['totalCarbonCost'] = $item['footprint']['carbon_per_dollar'];
-            }
-        }
+        $info['totalCarbonCost'] = $body['total_carbon_cost'];
+        $info['carbonPerDollar'] = $body['items'][0]['footprint']['carbon_per_dollar'];
 
         return $info;
     }
